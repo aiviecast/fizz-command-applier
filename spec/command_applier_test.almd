@@ -1,0 +1,28 @@
+import self as cmd
+
+test "face commands" {
+  assert_eq(cmd.route("setExpression"), 0)
+  assert_eq(cmd.route("setExpressions"), 0)
+  assert_eq(cmd.route("setMouthOpen"), 0)
+  assert_eq(cmd.route("setEmotion"), 0)
+}
+test "pose / motion / speech / control / scene" {
+  assert_eq(cmd.route("lookAt"), 1)
+  assert_eq(cmd.route("wave"), 1)
+  assert_eq(cmd.route("playFbx"), 2)
+  assert_eq(cmd.route("playProc"), 2)
+  assert_eq(cmd.route("speak"), 3)
+  assert_eq(cmd.route("stopSpeak"), 3)
+  assert_eq(cmd.route("setMic"), 4)
+  assert_eq(cmd.route("reset"), 4)
+  assert_eq(cmd.route("setBackground"), 5)
+  assert_eq(cmd.route("setCamera"), 5)
+}
+test "case-insensitive; unknown is -1; names round-trip" {
+  assert_eq(cmd.route("SETEMOTION"), 0)
+  assert_eq(cmd.route("PlayProc"), 2)
+  assert_eq(cmd.route("nope"), 0 - 1)
+  assert_eq(cmd.subsystem_name(0), "face")
+  assert_eq(cmd.subsystem_name(5), "scene")
+  assert_eq(cmd.subsystem_name(9), "unknown")
+}

@@ -1,0 +1,21 @@
+// CLI (native) — stdin の command type を subsystem に分類する。
+//   printf 'setEmotion\nplayProc\nspeak\nbogus\n' | fizz-command-applier
+//   setEmotion	face
+//   playProc	motion
+//   speak	speech
+//   bogus	unknown
+import self as cmd
+import io
+import string
+
+effect fn main() -> Unit = {
+  var open = true
+  while open {
+    let line = io.read_line()
+    if string.trim(line) == "" then { open = false }
+    else {
+      let t = string.trim(line)
+      println(t + "\t" + cmd.subsystem_name(cmd.route(t)))
+    }
+  }
+}

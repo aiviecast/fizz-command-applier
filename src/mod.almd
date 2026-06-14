@@ -1,0 +1,45 @@
+// fizz_command_applier — wire-protocol の avatar Command をサブシステムに振り分ける。
+//
+// 責務 (一行): Command の type 文字列を、それを処理するサブシステム分類に対応付ける。
+//
+// §6 の control.ts の dispatch は「type → 各部品呼び出し」。各呼び出し (VRM 適用 /
+// scene 操作) はブラウザ専用だが、**どの type がどのサブシステムか**という振り分け表は
+// 純粋なので Almide に集約=単一の正本。ブラウザはこの分類で受け取った Command を
+// 該当ハンドラ群へ回す。native と wasm の両方で同じ表を使う。
+//
+// 移植元: openaituber src/vrm/control.ts の applyCommand スイッチ。
+//
+// ── subsystem id (route の戻り) ──
+//   0 face    表情/モーフ/口 (setExpression(s) / setMouthOpen / setEmotion)
+//   1 pose    ボーン直接操作 (lookAt / setHeadRotation / setBoneRotation / wave)
+//   2 motion  クリップ/手続きモーション (playFbx / stopMotion / playProc)
+//   3 speech  発話 (speak / stopSpeak)
+//   4 control ランタイム制御 (setMic / setIdle / reset)
+//   5 scene   シーン/カメラ (setBackground / setLighting / setGrid / setCamera)
+//  -1 unknown 未知の type
+
+import list
+import string
+
+// (subsystem id, その id が処理する command type 群)。
+fn routes() -> List[(Int, List[String])] = [
+  (0, ["setexpression", "setexpressions", "setmouthopen", "setemotion"]),
+  (1, ["lookat", "setheadrotation", "setbonerotation", "wave"]),
+  (2, ["playfbx", "stopmotion", "playproc"]),
+  (3, ["speak", "stopspeak"]),
+  (4, ["setmic", "setidle", "reset"]),
+  (5, ["setbackground", "setlighting", "setgrid", "setcamera"]),
+]
+
+local fn scan(rs: List[(Int, List[String])], cmd: String, i: Int) -> Int =
+  match list.get(rs, i) {
+    none      => 0 - 1,
+    some(row) => if list.contains(row.1, cmd) then row.0 else scan(rs, cmd, i + 1),
+  }
+
+// Command type → subsystem id (未知は -1)。type は case-insensitive で照合。
+fn route(cmd_type: String) -> Int = scan(routes(), string.to_lower(cmd_type), 0)
+
+// subsystem id → 名前 (範囲外は "unknown")。
+fn subsystem_name(id: Int) -> String =
+  match id { 0 => "face", 1 => "pose", 2 => "motion", 3 => "speech", 4 => "control", 5 => "scene", _ => "unknown" }
