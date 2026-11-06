@@ -1,5 +1,5 @@
 // wasm — ブラウザの command dispatch から呼ぶ。command type を線形メモリ経由で渡し
-// (cmd_alloc で確保 → JS が書く)、cmd_route() が subsystem id (Float, -1=unknown) を返す。
+// (cmd_alloc で確保 → JS が書く)、cmd_route()! が subsystem id (Float, -1=unknown) を返す。
 // JS は id から自前のハンドラ表を引く (文字列出力ブリッジ不要)。almide#440 で main 参照。
 import self as cmd
 import bytes
@@ -7,19 +7,19 @@ import ffi
 import float
 import int
 
-var g_buf: Bytes = bytes.zeros(0)
+var g_buf: Region = ffi.region(bytes.new())
 
-@export(wasm, "cmd_alloc")
-fn cmd_alloc(len: Float) -> RawPtr = {
-  g_buf = bytes.zeros(int.from_saturating(len))
-  ffi.address(g_buf)
+@export(wasm, "cmd_alloc", returns: address)
+effect fn cmd_alloc(len: Float) -> Region = {
+  g_buf = ffi.alloc(int.from_saturating(len))!
+  g_buf
 }
 
 @export(wasm, "cmd_route")
-fn cmd_route() -> Float = float.from(cmd.route(bytes.to_string_lossy(g_buf)))
+effect fn cmd_route() -> Float = float.from(cmd.route(bytes.to_string_lossy(ffi.to_bytes(g_buf)!)))
 
 effect fn main() -> Unit = {
-  let _a = cmd_alloc(1.0)
-  let _b = cmd_route()
+  let _a = cmd_alloc(1.0)!
+  let _b = cmd_route()!
   ()
 }
