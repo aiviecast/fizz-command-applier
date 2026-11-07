@@ -1,4 +1,4 @@
 [package]
 name = "fizz_command_applier"
-version = "0.1.0"
+version = "0.2.0"
 description = "Fizz command applier — classify a wire-protocol avatar Command type into the subsystem that handles it (face / pose / motion / speech / control / scene). One Almide core, native + wasm."
